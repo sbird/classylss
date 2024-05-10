@@ -52,7 +52,7 @@ def classy_extension_config():
         'extra_link_args': ['-g', '-fPIC'],
         'extra_compile_args': ['-g'],
         'language': 'c',
-        'libraries': ['class', 'gfortran', 'm'],
+        'libraries': ['class', 'm'],
     }
 
 setup(
