@@ -30,6 +30,9 @@ class BuildCLib(build_ext):
     """ Custom command to build external C libraries before building extensions """
     def run(self):
         build_CLASS(self.build_temp)
+        # copy data files from temp to classlssy package directory
+        shutil.rmtree(os.path.join(self.build_lib, 'classylss', 'data'), ignore_errors=True)
+        shutil.copytree(os.path.join(self.build_temp, 'data'), os.path.join(self.build_lib, 'classylss', 'data'))
         super().run()
 
     def build_extensions(self):
