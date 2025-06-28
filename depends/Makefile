@@ -1,4 +1,3 @@
-CLASS_VERSION?=2.8.2
 DEST?=_inst
 
 TARBALL=class-v$(CLASS_VERSION).tar.gz
@@ -19,7 +18,7 @@ $(SRC)/stamp.patch : $(SRC)/stamp.unzip \
 	  0002-class-2.6.1-pathsize.patch \
 	  0003-Add-FLT_EPSILON-to-array_interpolate_spline.patch
 	for i in $^; do echo $$i; \
-	if [ "$${i%%.patch}" != $$i ]]; then \
+	if [[ "$${i%%.patch}" != $$i ]]; then \
 		patch -d $(SRC) -p1 < $$i || exit 1; \
 	fi; \
 	done; \
@@ -38,6 +37,8 @@ $(DEST)/lib/libclass.a: $(SRC)/libclass.a Makefile
 	cp $(SRC)/libclass.a $(DEST)/lib
 	mkdir -p $(DEST)/data
 	./copy_data_files $(SRC) $(DEST)/data
+	cp $(SRC)/external/*/*.h $(DEST)/include
+
 
 unzip: $(SRC)/stamp.unzip
 patch: $(SRC)/stamp.patch
