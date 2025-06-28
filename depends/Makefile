@@ -22,10 +22,8 @@ $(SRC)/stamp.patch : $(SRC)/stamp.unzip \
 	done; \
 	touch $@
 
-$(SRC)/libclass.a: $(SRC)/stamp.patch class.cfg Makefile
-	cp Makefile.class $(SRC)/Makefile
-	cp class.cfg $(SRC)/myclass.cfg
-	cd $(SRC); make CLASSCFG=myclass.cfg libclass.a
+$(SRC)/libclass.a: $(SRC)/stamp.patch Makefile
+	cd $(SRC); make libclass.a
 
 $(DEST)/lib/libclass.a: $(SRC)/libclass.a Makefile
 	echo $(DEST)/data
