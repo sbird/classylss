@@ -61,9 +61,9 @@ def classy_extension_config():
 setup(
     name='classylss',
     version=find_version("classylss/version.py"),
-    author='Nick Hand, Yu Feng',
-    author_email='nicholas.adam.hand@gmail.com',
-    description="Lightweight Python binding of the CLASS CMB Boltzmann code",
+    author='Nick Hand, Yu Feng, Simeon Bird',
+    author_email='spb@ucr.edu',
+    description="More Extensive Python binding of the CLASS CMB Boltzmann code",
     license='GPL3',
     url="http://github.com/nickhand/classylss",
     install_requires=['numpy', 'Cython'],
