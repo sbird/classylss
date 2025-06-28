@@ -14,9 +14,7 @@ $(SRC)/stamp.unzip: $(TARBALL)
 	touch $@
 
 $(SRC)/stamp.patch : $(SRC)/stamp.unzip \
-	  0001-class-2.6.0-a_max.patch \
-	  0002-class-2.6.1-pathsize.patch \
-	  0003-Add-FLT_EPSILON-to-array_interpolate_spline.patch
+	  0002-class-2.6.1-pathsize.patch
 	for i in $^; do echo $$i; \
 	if [[ "$${i%%.patch}" != $$i ]]; then \
 		patch -d $(SRC) -p1 < $$i || exit 1; \
