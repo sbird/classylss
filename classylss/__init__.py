@@ -9,8 +9,8 @@ def get_data_files():
     path = os.path.dirname(__file__)
     path = os.path.join(path, 'data/external')
     r = dict(
-        hyrec_path = os.path.join(path, "HyRec2020"),
-        sd_external_path = os.path.join(path, "distortions"),
+        hyrec_path = os.path.join(path, "HyRec2020/"),
+        sd_external_path = os.path.join(path, "distortions/"),
         Galli_file = os.path.join(path, "heating/Galli_et_al_2013.dat"),
         sBBN_file = os.path.join(path, 'bbn', 'sBBN.dat'),
     )
