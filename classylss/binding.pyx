@@ -487,7 +487,7 @@ cdef class Background:
         It shall be 1 usually.
         """
         def __get__(self):
-            return self.ba.a_today
+            return 1
 
     property Omega0_m:
         r"""

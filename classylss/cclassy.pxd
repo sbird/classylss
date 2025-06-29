@@ -103,7 +103,6 @@ cdef extern from "class.h":
         double h
         double H0
         double age
-        double a_today #Added by classylss
         double a_max   #Added by classylss
         double conformal_age
         double K
