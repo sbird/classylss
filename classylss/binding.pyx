@@ -288,7 +288,7 @@ cdef class ClassEngine:
                 raise ClassBadValueError(self.th.error_message)
             self.ready.th = True
 
-        if "perturb" in tasks and not self.ready.pt:
+        if "perturbations" in tasks and not self.ready.pt:
             if perturbations_init(&(self.pr), &(self.ba),
                             &(self.th), &(self.pt)) == _FAILURE_:
                 raise ClassBadValueError(self.pt.error_message)
@@ -300,7 +300,7 @@ cdef class ClassEngine:
                 raise ClassBadValueError(self.pm.error_message)
             self.ready.pm = True
 
-        if "nonlinear" in tasks and not self.ready.nl:
+        if "fourier" in tasks and not self.ready.nl:
             if fourier_init(&self.pr, &self.ba, &self.th,
                               &self.pt, &self.pm, &self.nl) == _FAILURE_:
                 raise ClassBadValueError(self.nl.error_message)
@@ -312,7 +312,7 @@ cdef class ClassEngine:
                 raise ClassBadValueError(self.tr.error_message)
             self.ready.tr = True
 
-        if "spectra" in tasks and not self.ready.sp:
+        if "harmonic" in tasks and not self.ready.sp:
             if harmonic_init(&(self.pr), &(self.ba), &(self.pt),
                             &(self.pm), &(self.nl), &(self.tr),
                             &(self.sp)) == _FAILURE_:
