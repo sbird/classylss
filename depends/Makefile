@@ -23,7 +23,7 @@ $(SRC)/stamp.patch : $(SRC)/stamp.unzip \
 	touch $@
 
 $(SRC)/libclass.a: $(SRC)/stamp.patch Makefile
-	cd $(SRC); make libclass.a
+	cd $(SRC); make libclass.a CLASSDIR=$(CLASSDIR)
 
 $(DEST)/lib/libclass.a: $(SRC)/libclass.a Makefile
 	echo $(DEST)/data

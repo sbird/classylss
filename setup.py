@@ -20,8 +20,8 @@ def find_version(path, name='version'):
 CLASS_VERSION = find_version("classylss/version.py", name='class_version')
 
 def build_CLASS(prefix):
-    args = (package_basedir, package_basedir, CLASS_VERSION, os.path.abspath(prefix))
-    command = 'sh %s/depends/install_class.sh %s %s %s' % args
+    args = (package_basedir, package_basedir, CLASS_VERSION, os.path.abspath(prefix), "./")
+    command = 'sh %s/depends/install_class.sh %s %s %s %s' % args
     ret = os.system(command)
     if ret != 0:
         raise ValueError("Could not build CLASS v%s" % CLASS_VERSION)
