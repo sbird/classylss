@@ -258,7 +258,7 @@ cdef class ClassEngine:
             if input_read_from_file(fc, &self.pr, &self.ba, &self.th,
                           &self.pt, &self.tr, &self.pm, &self.sp,
                           &self.nl, &self.le, &self.sd, &self.op, errmsg) == _FAILURE_:
-                raise ClassParserError(errmsg.decode(), self.parameter_file)
+                raise ClassParserError(errmsg, self.parameter_file)
 
             # This part is done to list all the unread parameters, for debugging
             problem_flag = False
@@ -279,50 +279,50 @@ cdef class ClassEngine:
         # with the error message from the faulty module of CLASS.
         if "background" in tasks and not self.ready.ba:
             if background_init(&(self.pr), &(self.ba)) == _FAILURE_:
-                raise ClassBadValueError(self.ba.error_message.decode())
+                raise ClassBadValueError(self.ba.error_message)
             self.ready.ba = True
 
         if "thermodynamics" in tasks and not self.ready.th:
             if thermodynamics_init(&(self.pr), &(self.ba),
                                    &(self.th)) == _FAILURE_:
-                raise ClassBadValueError(self.th.error_message.decode())
+                raise ClassBadValueError(self.th.error_message)
             self.ready.th = True
 
         if "perturb" in tasks and not self.ready.pt:
             if perturbations_init(&(self.pr), &(self.ba),
                             &(self.th), &(self.pt)) == _FAILURE_:
-                raise ClassBadValueError(self.pt.error_message.decode())
+                raise ClassBadValueError(self.pt.error_message)
             self.ready.pt = True
 
         if "primordial" in tasks and not self.ready.pm:
             if primordial_init(&(self.pr), &(self.pt),
                                &(self.pm)) == _FAILURE_:
-                raise ClassBadValueError(self.pm.error_message.decode())
+                raise ClassBadValueError(self.pm.error_message)
             self.ready.pm = True
 
         if "nonlinear" in tasks and not self.ready.nl:
             if fourier_init(&self.pr, &self.ba, &self.th,
                               &self.pt, &self.pm, &self.nl) == _FAILURE_:
-                raise ClassBadValueError(self.nl.error_message.decode())
+                raise ClassBadValueError(self.nl.error_message)
             self.ready.nl = True
 
         if "transfer" in tasks and not self.ready.tr:
             if transfer_init(&(self.pr), &(self.ba), &(self.th),
                              &(self.pt), &(self.nl), &(self.tr)) == _FAILURE_:
-                raise ClassBadValueError(self.tr.error_message.decode())
+                raise ClassBadValueError(self.tr.error_message)
             self.ready.tr = True
 
         if "spectra" in tasks and not self.ready.sp:
             if harmonic_init(&(self.pr), &(self.ba), &(self.pt),
                             &(self.pm), &(self.nl), &(self.tr),
                             &(self.sp)) == _FAILURE_:
-                raise ClassBadValueError(self.sp.error_message.decode())
+                raise ClassBadValueError(self.sp.error_message)
             self.ready.sp = True
 
         if "lensing" in tasks and not self.ready.le:
             if lensing_init(&(self.pr), &(self.pt), &(self.sp),
                             &(self.nl), &(self.le)) == _FAILURE_:
-                raise ClassBadValueError(self.le.error_message.decode())
+                raise ClassBadValueError(self.le.error_message)
             self.ready.le = True
 
         # At this point, the cosmological instance contains everything needed. The
@@ -1149,14 +1149,14 @@ cdef class Primordial:
         memset(titles, 0, _MAXTITLESTRINGLENGTH_)
 
         if primordial_output_titles(self.pt, self.pm, titles)==_FAILURE_:
-            raise ClassRuntimeError(self.pm.error_message.decode())
+            raise ClassRuntimeError(self.pm.error_message)
 
         dtype = _titles_to_dtype(titles)
 
         cdef np.ndarray data = np.zeros(self.pm.lnk_size, dtype=dtype)
 
         if primordial_output_data(self.pt, self.pm, len(dtype.fields), <double*>data.data)==_FAILURE_:
-            raise ClassRuntimeError(self.pm.error_message.decode())
+            raise ClassRuntimeError(self.pm.error_message)
 
         return data
 
@@ -1285,7 +1285,7 @@ cdef class Spectra:
 
         return out
 
-    def get_transfer(self, z, output_format='class'):
+    def get_transfer(self, z=0, output_format='class'):
         r"""
         Return the density and/or velocity transfer functions for all initial
         conditions today. You must include 'dCl' and 'vCl' in the list of
@@ -1326,7 +1326,7 @@ cdef class Spectra:
             outf = class_format
 
         if perturbations_output_titles(self.ba, self.pt, outf, titles)==_FAILURE_:
-            raise ClassRuntimeError(self.op.error_message.decode())
+            raise ClassRuntimeError(self.pt.error_message)
 
         # k is in h/Mpc. Other functions unit is unclear.
         dtype = _titles_to_dtype(titles, remove_units=True)
@@ -1337,13 +1337,13 @@ cdef class Spectra:
         cdef np.ndarray data = np.zeros((ic_num, self.nl.k_size), dtype=dtype)
 
         if perturbations_output_data_at_z(self.ba, self.pt, outf, <double> z, len(dtype.fields), <double*> data.data)==_FAILURE_:
-            raise ClassRuntimeError(self.sp.error_message.decode())
+            raise ClassRuntimeError(self.pt.error_message)
 
         ic_keys = []
         if ic_num > 1:
             for index_ic in range(ic_num):
                 if perturbations_output_firstline_and_ic_suffix(self.pt, index_ic, ic_info, ic_suffix)==_FAILURE_:
-                    raise ClassRuntimeError(self.op.error_message.decode())
+                    raise ClassRuntimeError(self.pt.error_message)
 
                 ic_key = <bytes> ic_suffix
                 ic_keys.append(ic_key.decode())
