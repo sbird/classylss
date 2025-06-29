@@ -139,8 +139,6 @@ cdef extern from "class.h":
         short has_fld
         short has_lambda
         int sgnK
-        short long_info
-        short inter_normal
 
     cdef struct thermodynamics:
         short is_allocated

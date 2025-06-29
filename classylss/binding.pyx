@@ -613,7 +613,7 @@ cdef class Background:
                 bval = (<double*>(np.PyArray_MultiIter_DATA(it, 1)))
                 if background_tau_of_z(self.ba, aval, &tau)==_FAILURE_:
                     bval[0] = NAN
-                elif background_at_tau(self.ba,tau,self.ba.long_info,self.ba.inter_normal,&last_index, &pvecback[0])==_FAILURE_:
+                elif background_at_tau(self.ba,tau,long_info,inter_normal,&last_index, &pvecback[0])==_FAILURE_:
                     bval[0] = NAN
                 else:
                     bval[0] = pvecback[column]
