@@ -1211,7 +1211,7 @@ cdef class Spectra:
         """
         def __get__(self):
             # factor of 1.001 to avoid bounds errors due to rounding errors
-            return 1.001*np.exp(self.sp.ln_k[0])/self.ba.h;
+            return 1.001*np.exp(self.nl.ln_k[0])/self.ba.h;
 
     property P_k_max:
         r"""
@@ -1220,14 +1220,14 @@ cdef class Spectra:
         """
         def __get__(self):
             # factor of 0.999 to avoid bounds errors due to rounding errors
-            return 0.999*np.exp(self.sp.ln_k[self.sp.ln_k_size-1])/self.ba.h;
+            return 0.999*np.exp(self.nl.ln_k[self.nl.k_size-1])/self.ba.h;
 
     property sigma8:
         r"""
         The amplitude of matter fluctuations at :math:`z=0`.
         """
         def __get__(self):
-            return self.sp.sigma8
+            return self.nl.sigma8[0]
 
     property A_s:
         r"""
@@ -1334,7 +1334,7 @@ cdef class Spectra:
         index_md = 0
         ic_num = self.sp.ic_size[index_md]
 
-        cdef np.ndarray data = np.zeros((ic_num, self.sp.ln_k_size), dtype=dtype)
+        cdef np.ndarray data = np.zeros((ic_num, self.nl.k_size), dtype=dtype)
 
         if harmonic_output_tk_data(self.ba, self.pt, self.sp, outf, <double> z, len(dtype.fields), <double*> data.data)==_FAILURE_:
             raise ClassRuntimeError(self.sp.error_message.decode())

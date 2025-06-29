@@ -393,9 +393,6 @@ cdef extern from "class.h":
         int * l_size
         int index_md_scalars
         #Added by classylss
-        int ln_k_size
-        double* ln_k
-        double sigma8
         double alpha_II_2_20
         double alpha_RI_2_20
         double alpha_RR_2_20
@@ -477,6 +474,7 @@ cdef extern from "class.h":
         int tau_size
         int index_tau_min_nl
         double * k
+        double * ln_k #Added by classylss
         double * ln_tau
         double * tau
         double ** ln_pk_l
