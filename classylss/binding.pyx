@@ -184,6 +184,7 @@ cdef class ClassEngine:
     cdef fourier nl
     cdef transfer tr
     cdef harmonic sp
+    cdef distortions sd
     cdef output op
     cdef lensing le
     cdef ready_flags ready
@@ -254,9 +255,9 @@ cdef class ClassEngine:
         # non-understood parameters asked to the wrapper is a problematic
         # situation.
         if "input" in tasks and not self.ready.input:
-            if input_init(fc, &self.pr, &self.ba, &self.th,
+            if input_read_from_file(fc, &self.pr, &self.ba, &self.th,
                           &self.pt, &self.tr, &self.pm, &self.sp,
-                          &self.nl, &self.le, &self.op, errmsg) == _FAILURE_:
+                          &self.nl, &self.le, &self.sd, &self.op, errmsg) == _FAILURE_:
                 raise ClassParserError(errmsg.decode(), self.parameter_file)
 
             # This part is done to list all the unread parameters, for debugging

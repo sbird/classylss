@@ -520,10 +520,8 @@ cdef extern from "class.h":
     cdef double _G_
     cdef double _eV_
 
-    int input_init(void*, void*, void*, void*, void*, void*, void*, void*, void*,
-        void*, void*, char*) nogil
     int input_read_from_file(void*, void*, void*, void*, void*, void*, void*, void*, void*,
-        void*, void*, void*, char*)
+        void*, void*, void*, char*) nogil
     int background_init(void*,void*) nogil
     int thermodynamics_init(void*,void*,void*) nogil
     int perturbations_init(void*,void*,void*,void*) nogil
