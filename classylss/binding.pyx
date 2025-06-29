@@ -134,16 +134,16 @@ def _build_task_dependency(tasks):
     """
 
     if "lensing" in tasks:
-        tasks.append("spectra")
-    if "spectra" in tasks:
+        tasks.append("harmonic")
+    if "harmonic" in tasks:
         tasks.append("transfer")
     if "transfer" in tasks:
-        tasks.append("nonlinear")
-    if "nonlinear" in tasks:
+        tasks.append("fourier")
+    if "fourier" in tasks:
         tasks.append("primordial")
     if "primordial" in tasks:
-        tasks.append("perturb")
-    if "perturb" in tasks:
+        tasks.append("perturbations")
+    if "perturbations" in tasks:
         tasks.append("thermodynamics")
     if "thermodynamics" in tasks:
         tasks.append("background")
@@ -178,12 +178,12 @@ cdef class ClassEngine:
     """
     cdef precision pr
     cdef background ba
-    cdef thermo th
-    cdef perturbs pt
+    cdef thermodynamics th
+    cdef perturbations pt
     cdef primordial pm
-    cdef nonlinear nl
-    cdef transfers tr
-    cdef spectra sp
+    cdef fourier nl
+    cdef transfer tr
+    cdef harmonic sp
     cdef output op
     cdef lensing le
     cdef ready_flags ready
@@ -223,11 +223,11 @@ cdef class ClassEngine:
     def __dealloc__(self):
         if self.ready.fc: parser_free(&self.fc)
         if self.ready.le: lensing_free(&self.le)
-        if self.ready.sp: spectra_free(&self.sp)
+        if self.ready.sp: harmonic_free(&self.sp)
         if self.ready.tr: transfer_free(&self.tr)
-        if self.ready.nl: nonlinear_free(&self.nl)
+        if self.ready.nl: fourier_free(&self.nl)
         if self.ready.pm: primordial_free(&self.pm)
-        if self.ready.pt: perturb_free(&self.pt)
+        if self.ready.pt: perturbations_free(&self.pt)
         if self.ready.th: thermodynamics_free(&self.th)
         if self.ready.ba: background_free(&self.ba)
 
@@ -288,7 +288,7 @@ cdef class ClassEngine:
             self.ready.th = True
 
         if "perturb" in tasks and not self.ready.pt:
-            if perturb_init(&(self.pr), &(self.ba),
+            if perturbations_init(&(self.pr), &(self.ba),
                             &(self.th), &(self.pt)) == _FAILURE_:
                 raise ClassBadValueError(self.pt.error_message.decode())
             self.ready.pt = True
@@ -300,7 +300,7 @@ cdef class ClassEngine:
             self.ready.pm = True
 
         if "nonlinear" in tasks and not self.ready.nl:
-            if nonlinear_init(&self.pr, &self.ba, &self.th,
+            if fourier_init(&self.pr, &self.ba, &self.th,
                               &self.pt, &self.pm, &self.nl) == _FAILURE_:
                 raise ClassBadValueError(self.nl.error_message.decode())
             self.ready.nl = True
@@ -312,7 +312,7 @@ cdef class ClassEngine:
             self.ready.tr = True
 
         if "spectra" in tasks and not self.ready.sp:
-            if spectra_init(&(self.pr), &(self.ba), &(self.pt),
+            if harmonic_init(&(self.pr), &(self.ba), &(self.pt),
                             &(self.pm), &(self.nl), &(self.tr),
                             &(self.sp)) == _FAILURE_:
                 raise ClassBadValueError(self.sp.error_message.decode())
@@ -954,12 +954,12 @@ cdef class Perturbs:
       the CLASS engine object
     """
     cdef ClassEngine engine
-    cdef perturbs * pt
+    cdef perturbations * pt
     cdef background * ba
 
     def __init__(self, ClassEngine engine):
         self.engine = engine
-        self.engine.compute("perturbs")
+        self.engine.compute("perturbations")
         self.pt = &self.engine.pt
         self.ba = &self.engine.ba
 
@@ -1001,7 +1001,7 @@ cdef class Thermo:
       the CLASS engine object
     """
     cdef ClassEngine engine
-    cdef thermo * th
+    cdef thermodynamics * th
     cdef background * ba
 
     def __init__(self, ClassEngine engine):
@@ -1073,7 +1073,7 @@ cdef class Primordial:
       the CLASS engine object
     """
     cdef ClassEngine engine
-    cdef perturbs * pt
+    cdef perturbations * pt
     cdef primordial * pm
     cdef background * ba
 
@@ -1169,16 +1169,16 @@ cdef class Spectra:
       the CLASS engine object
     """
     cdef ClassEngine engine
-    cdef spectra * sp
+    cdef harmonic * sp
     cdef background * ba
-    cdef perturbs * pt
+    cdef perturbations * pt
     cdef primordial * pm
-    cdef nonlinear * nl
+    cdef fourier * nl
     cdef readonly dict data
 
     def __init__(self, ClassEngine engine):
         self.engine = engine
-        self.engine.compute("spectra")
+        self.engine.compute("harmonic")
 
         self.ba = &self.engine.ba
         self.nl = &self.engine.nl
@@ -1276,7 +1276,7 @@ cdef class Spectra:
                 aval = (<double*>np.PyArray_MultiIter_DATA(it, 0))[0]
                 bval = (<double*>np.PyArray_MultiIter_DATA(it, 1))
 
-                if _FAILURE_ == spectra_sigma(self.ba, self.pm, self.sp, 8./self.ba.h, aval, bval):
+                if _FAILURE_ == harmonic_sigma(self.ba, self.pm, self.sp, 8./self.ba.h, aval, bval):
                     bval[0] = NAN
 
                 #PyArray_MultiIter_NEXT is used to advance the iterator
@@ -1324,7 +1324,7 @@ cdef class Spectra:
         else:
             outf = class_format
 
-        if spectra_output_tk_titles(self.ba, self.pt, outf, titles)==_FAILURE_:
+        if harmonic_output_tk_titles(self.ba, self.pt, outf, titles)==_FAILURE_:
             raise ClassRuntimeError(self.op.error_message.decode())
 
         # k is in h/Mpc. Other functions unit is unclear.
@@ -1335,13 +1335,13 @@ cdef class Spectra:
 
         cdef np.ndarray data = np.zeros((ic_num, self.sp.ln_k_size), dtype=dtype)
 
-        if spectra_output_tk_data(self.ba, self.pt, self.sp, outf, <double> z, len(dtype.fields), <double*> data.data)==_FAILURE_:
+        if harmonic_output_tk_data(self.ba, self.pt, self.sp, outf, <double> z, len(dtype.fields), <double*> data.data)==_FAILURE_:
             raise ClassRuntimeError(self.sp.error_message.decode())
 
         ic_keys = []
         if ic_num > 1:
             for index_ic in range(ic_num):
-                if spectra_firstline_and_ic_suffix(self.pt, index_ic, ic_info, ic_suffix)==_FAILURE_:
+                if harmonic_firstline_and_ic_suffix(self.pt, index_ic, ic_info, ic_suffix)==_FAILURE_:
                     raise ClassRuntimeError(self.op.error_message.decode())
 
                 ic_key = <bytes> ic_suffix
@@ -1371,10 +1371,10 @@ cdef class Spectra:
         cdef double pk_cb_ic[1]
         cdef double pk_cb[1]
         if lin or self.nl.method == 0:
-            if spectra_pk_at_k_and_z(self.ba, self.pm, self.sp, k, z, pk_, pk_ic, pk_cb, pk_cb_ic) == _FAILURE_:
+            if harmonic_pk_at_k_and_z(self.ba, self.pm, self.sp, k, z, pk_, pk_ic, pk_cb, pk_cb_ic) == _FAILURE_:
                 return -1
         else:
-            if spectra_pk_nl_at_k_and_z(self.ba, self.pm, self.sp, k, z, pk_, pk_cb) ==_FAILURE_:
+            if harmonic_pk_nl_at_k_and_z(self.ba, self.pm, self.sp, k, z, pk_, pk_cb) ==_FAILURE_:
                 return -1
         return 0
 
