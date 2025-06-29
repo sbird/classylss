@@ -651,7 +651,7 @@ cdef extern from "class.h":
 
     int fourier_k_nl_at_z(void* pba, void* pfo, double z, double* k_nl, double* k_nl_cb) nogil
 
-    int harmonic_firstline_and_ic_suffix(void *ppt, int index_ic, char first_line[1024], FileName ic_suffix) nogil
+    int harmonic_firstline_and_ic_suffix(void *ppt, int index_ic, char first_line[_LINE_LENGTH_MAX_], FileName ic_suffix) nogil
 
     int harmonic_fast_pk_at_kvec_and_zvec(
                   void * pba,
