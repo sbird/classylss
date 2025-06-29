@@ -68,9 +68,9 @@ cdef int _build_file_content(pars, file_content * fc) except -1:
     strncpy(fc.filename, "NOFILE", sizeof(FileArg))
 
     _pars = {
-        "Alpha_inf hyrec file": _DATA_FILES['Alpha_inf_hyrec_file'],
-        "R_inf hyrec file" : _DATA_FILES['R_inf_hyrec_file'],
-        "two_photon_tables hyrec file" : _DATA_FILES['two_photon_tables_hyrec_file'],
+        "hyrec_path": _DATA_FILES['hyrec_path'],
+        "sd_external_path" : _DATA_FILES['sd_external_path'],
+        "Galli_file" : _DATA_FILES['Galli_file'],
         "sBBN file": _DATA_FILES['sBBN_file'],
         }
 
