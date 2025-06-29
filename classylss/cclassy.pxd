@@ -548,9 +548,6 @@ cdef extern from "class.h":
     int primordial_output_data(void *ppt, void *ppm, int number_of_titles, double *data) nogil
     int primordial_spectrum_at_k(void * ppm, int index_md, linear_or_logarithmic mode, double k, double * pk) nogil
 
-    int harmonic_output_tk_titles(void *pba, void *ppt,  file_format output_format, char titles[_MAXTITLESTRINGLENGTH_]) nogil
-    int harmonic_output_tk_data(void *pba,void *ppt,void *psp,  file_format output_format, double z, int number_of_titles, double *data) nogil
-
     int harmonic_cl_at_l(void* phr,double l,double * cl,double * * cl_md,double * * cl_md_ic) nogil
     int lensing_cl_at_l(void * ple,int l,double * cl_lensed) nogil
 
@@ -646,8 +643,6 @@ cdef extern from "class.h":
         double * out_pk_cb) nogil
 
     int fourier_k_nl_at_z(void* pba, void* pfo, double z, double* k_nl, double* k_nl_cb) nogil
-
-    int harmonic_firstline_and_ic_suffix(void *ppt, int index_ic, char first_line[_LINE_LENGTH_MAX_], FileName ic_suffix) nogil
 
     int harmonic_fast_pk_at_kvec_and_zvec(
                   void * pba,

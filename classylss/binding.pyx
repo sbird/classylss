@@ -1325,7 +1325,7 @@ cdef class Spectra:
         else:
             outf = class_format
 
-        if harmonic_output_tk_titles(self.ba, self.pt, outf, titles)==_FAILURE_:
+        if perturbations_output_titles(self.ba, self.pt, outf, titles)==_FAILURE_:
             raise ClassRuntimeError(self.op.error_message.decode())
 
         # k is in h/Mpc. Other functions unit is unclear.
@@ -1336,13 +1336,13 @@ cdef class Spectra:
 
         cdef np.ndarray data = np.zeros((ic_num, self.nl.k_size), dtype=dtype)
 
-        if harmonic_output_tk_data(self.ba, self.pt, self.sp, outf, <double> z, len(dtype.fields), <double*> data.data)==_FAILURE_:
+        if perturbations_output_data_at_z(self.ba, self.pt, outf, <double> z, len(dtype.fields), <double*> data.data)==_FAILURE_:
             raise ClassRuntimeError(self.sp.error_message.decode())
 
         ic_keys = []
         if ic_num > 1:
             for index_ic in range(ic_num):
-                if harmonic_firstline_and_ic_suffix(self.pt, index_ic, ic_info, ic_suffix)==_FAILURE_:
+                if perturbations_output_firstline_and_ic_suffix(self.pt, index_ic, ic_info, ic_suffix)==_FAILURE_:
                     raise ClassRuntimeError(self.op.error_message.decode())
 
                 ic_key = <bytes> ic_suffix
