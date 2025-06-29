@@ -47,16 +47,14 @@ class BuildCLib(build_ext):
 
         super().build_extensions()
 
-def classy_extension_config():
-    return {
-        'name': 'classylss.binding',
-        'sources': ['classylss/binding.pyx'],
-        'include_dirs': [numpy.get_include(),],
-        'extra_link_args': ['-g', '-fPIC'],
-        'extra_compile_args': ['-g'],
-        'language': 'c',
-        'libraries': ['class', 'm'],
-    }
+classy_ext = Extension('classylss.binding',
+        sources= ['classylss/binding.pyx',],
+        include_dirs = [numpy.get_include(),],
+        extra_link_args = ['-g', '-fPIC'],
+        extra_compile_args = ['-g'],
+        language= 'c++',
+        libraries = ['class', 'm'],
+        )
 
 setup(
     name='classylss',
@@ -68,7 +66,7 @@ setup(
     url="http://github.com/nickhand/classylss",
     install_requires=['numpy', 'Cython'],
     extras_require={'tests': ['pytest', 'astropy', 'scipy']},
-    ext_modules=cythonize([Extension(**classy_extension_config())], compiler_directives={'language_level' : "3"}, include_path=[numpy.get_include(), "classylss/"]),
+    ext_modules=cythonize(classy_ext, compiler_directives={'language_level' : "3"}, include_path=[numpy.get_include(), "classylss/"]),
     cmdclass={
         'build_ext': BuildCLib,
         # 'clean': CustomClean
