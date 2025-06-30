@@ -2,7 +2,7 @@
 cimport cython
 import numpy as np
 cimport numpy as np
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport calloc, malloc, free
 from libc.string cimport memset, strncpy, strdup
 
 from classylss import get_data_files
@@ -1329,51 +1329,70 @@ cdef class Spectra:
           array containing transfer functions. ``k`` here is in units of
           :math:`h \mathrm{Mpc}^{-1}`.
         """
+        cdef char *titles
+        cdef double* data
+        cdef char ic_info[1024]
+        cdef FileName ic_suffix
+        cdef file_format outf
+
         if (not self.pt.has_density_transfers) and (not self.pt.has_velocity_transfers):
             raise RuntimeError("Perturbation is not computed")
-
-        cdef FileName ic_suffix
-        cdef file_format_outf
-        cdef char ic_info[1024]
-
-        cdef char titles[_MAXTITLESTRINGLENGTH_]
-        memset(titles, 0, _MAXTITLESTRINGLENGTH_)
 
         if output_format == 'camb':
             outf = camb_format
         else:
             outf = class_format
 
+        index_md = self.pt.index_md_scalars;
+        titles = <char*>calloc(_MAXTITLESTRINGLENGTH_,sizeof(char))
+
         if perturbations_output_titles(self.ba, self.pt, outf, titles)==_FAILURE_:
+            free(titles) #manual free due to error
             raise ClassRuntimeError(self.pt.error_message)
+
+        tmp = <bytes> titles
+        tmp = str(tmp.decode())
+        names = tmp.split("\t")[:-1]
+        number_of_titles = len(names)
+        timesteps = self.pt.k_size[index_md]
 
         # k is in h/Mpc. Other functions unit is unclear.
         dtype = _titles_to_dtype(titles, remove_units=True)
 
-        index_md = 0
-        ic_num = self.sp.ic_size[index_md]
+        size_ic_data = timesteps*number_of_titles;
+        ic_num = self.pt.ic_size[index_md]
 
-        cdef np.ndarray data = np.zeros((ic_num, self.fo.k_size), dtype=dtype)
+        data = <double*>malloc(sizeof(double)*size_ic_data*ic_num)
 
-        if perturbations_output_data_at_z(self.ba, self.pt, outf, <double> z, len(dtype.fields), <double*> data.data)==_FAILURE_:
+        if perturbations_output_data_at_z(self.ba, self.pt, outf, <double> z, number_of_titles, data)==_FAILURE_:
+            free(titles)
+            free(data)
             raise ClassRuntimeError(self.pt.error_message)
 
-        ic_keys = []
-        if ic_num > 1:
-            for index_ic in range(ic_num):
-                if perturbations_output_firstline_and_ic_suffix(self.pt, index_ic, ic_info, ic_suffix)==_FAILURE_:
-                    raise ClassRuntimeError(self.pt.error_message)
+        transfers = {}
 
-                ic_key = <bytes> ic_suffix
-                ic_keys.append(ic_key.decode())
+        for index_ic in range(ic_num):
+            if perturbations_output_firstline_and_ic_suffix(self.pt, index_ic, ic_info, ic_suffix)==_FAILURE_:
+                free(titles) #manual free due to error
+                free(data) #manual free due to error
+                raise ClassRuntimeError(self.pt.error_message)
+            ic_key = <bytes> ic_suffix
 
-            spectra = {}
-            for ic_key, row in zip(ic_keys, data):
-                spectra[ic_key] = row
-        else:
-            spectra = data[0]
+            tmpdict = {}
+            for i in range(number_of_titles):
+                tmpdict[names[i]] = np.zeros(timesteps, dtype=np.double)
+                for index in range(timesteps):
+                    tmpdict[names[i]][index] = data[index_ic*size_ic_data+index*number_of_titles+i]
 
-        return spectra
+            if ic_num==1:
+                transfers = tmpdict
+            else:
+                transfers[ic_key] = tmpdict
+
+        free(titles)
+        free(data)
+
+        return transfers
 
     # Gives the total matter pk for a given (k,z)
     cdef double pk(self,double k, double z, int lin) nogil:
