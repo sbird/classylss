@@ -13,16 +13,7 @@ $(SRC)/stamp.unzip: $(TARBALL)
 	gzip -dc $(TARBALL) | tar xf - -C $(UNPACK)
 	touch $@
 
-$(SRC)/stamp.patch : $(SRC)/stamp.unzip \
-	  0002-class-2.6.1-pathsize.patch
-	for i in $^; do echo $$i; \
-	if [[ "$${i%%.patch}" != $$i ]]; then \
-		patch -d $(SRC) -p1 < $$i || exit 1; \
-	fi; \
-	done; \
-	touch $@
-
-$(SRC)/libclass.a: $(SRC)/stamp.patch Makefile
+$(SRC)/libclass.a: $(SRC)/stamp.unzip Makefile
 	cd $(SRC); make libclass.a CLASSDIR=$(CLASSDIR)
 
 $(DEST)/lib/libclass.a: $(SRC)/libclass.a Makefile
@@ -37,6 +28,5 @@ $(DEST)/lib/libclass.a: $(SRC)/libclass.a Makefile
 
 
 unzip: $(SRC)/stamp.unzip
-patch: $(SRC)/stamp.patch
 build: $(SRC)/libclass.a
 install: $(DEST)/lib/libclass.a
