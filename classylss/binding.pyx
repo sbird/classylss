@@ -626,7 +626,7 @@ cdef class Background:
         r"""
         Return :math:`\Omega_{pncdm}` as a function redshift.
         """
-        return 3 * self.p_ncdm(z, species) / self.rho_tot(z)
+        return 3 * self.p_ncdm(z, species) / self.rho_crit(z)
 
     def rho_g(self, z):
         r"""
@@ -647,14 +647,14 @@ cdef class Background:
         Density of matter :math:`\rho_b` as a function of redshift, in
         units of :math:`10^{10} (M_\odot/h) (\mathrm{Mpc}/h)^{-3}`.
         """
-        return self.compute_for_z(z, self.ba.index_bg_Omega_m) * self.rho_tot(z)
+        return self.compute_for_z(z, self.ba.index_bg_Omega_m) * self.rho_crit(z)
 
     def rho_r(self, z):
         r"""
         Density of radiation :math:`\rho_r` as a function of redshift, in
         units of :math:`10^{10} (M_\odot/h) (\mathrm{Mpc}/h)^{-3}`.
         """
-        return self.compute_for_z(z, self.ba.index_bg_Omega_r) * self.rho_tot(z)
+        return self.compute_for_z(z, self.ba.index_bg_Omega_r) * self.rho_crit(z)
 
     def rho_cdm(self, z):
         r"""
@@ -708,14 +708,6 @@ cdef class Background:
         """
         z = np.array(z, dtype=np.float64)
         return -self.ba.K * ( z+1.) ** 2 * self._RHO_
-
-    def rho_tot(self, z):
-        r"""
-        Total density :math:`\rho_\mathrm{tot}` as a function of redshift, in
-        units of :math:`10^{10} (M_\odot/h) (\mathrm{Mpc}/h)^{-3}`. It is usually
-        close to 27.76.
-        """
-        return self.rho_crit(z) - self.rho_k(z)
 
     def rho_fld(self, z):
         r"""
@@ -785,7 +777,7 @@ cdef class Background:
         r"""
         Density parameter of curvature.
         """
-        return 1 - self.rho_tot(z)/self.rho_crit(z)
+        return self.rho_k(z)/self.rho_crit(z)
 
     def Omega_ur(self, z):
         r"""
