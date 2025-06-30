@@ -1392,10 +1392,10 @@ cdef class Spectra:
             raise ClassRuntimeError("No power spectrum computed. You must add mPk to the list of outputs.")
 
         if lin or self.fo.method == nl_none:
-            if fourier_pk_at_k_and_z(&self.ba,&self.pm,&self.fo,pk_linear,k,z,self.fo.index_pk_m,&pk,NULL)==_FAILURE_:
+            if fourier_pk_at_k_and_z(self.ba,self.pm,self.fo,pk_linear,k,z,self.fo.index_pk_m,&pk,NULL)==_FAILURE_:
                 raise ClassRuntimeError(self.fo.error_message)
         else:
-            if fourier_pk_at_k_and_z(&self.ba,&self.pm,&self.fo,pk_nonlinear,k,z,self.fo.index_pk_m,&pk,NULL)==_FAILURE_:
+            if fourier_pk_at_k_and_z(self.ba,self.pm,self.fo,pk_nonlinear,k,z,self.fo.index_pk_m,&pk,NULL)==_FAILURE_:
                 raise ClassRuntimeError(self.fo.error_message)
 
         return pk
