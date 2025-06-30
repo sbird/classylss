@@ -27,6 +27,7 @@ jobs:
         sudo apt install -y build-essential python3-numpy cython3
         python -m pip install --upgrade pip
         pip install build pytest
+        pip install astropy scipy #For the tests
     - name: Build
       run: |
         python -m build
@@ -38,6 +39,7 @@ jobs:
         python setup.py build_ext --inplace
     - name: python unit tests
       run: |
+        cd classylss
         python -m pytest
     - name: Version
       run: bash check_tag.sh classylss/version.py
