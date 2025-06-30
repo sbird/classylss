@@ -158,7 +158,7 @@ ctypedef struct ready_flags:
     int th
     int pt
     int pm
-    int nl
+    int fo
     int tr
     int sp
     int op
@@ -181,7 +181,7 @@ cdef class ClassEngine:
     cdef thermodynamics th
     cdef perturbations pt
     cdef primordial pm
-    cdef fourier nl
+    cdef fourier fo
     cdef transfer tr
     cdef harmonic sp
     cdef distortions sd
@@ -226,7 +226,7 @@ cdef class ClassEngine:
         if self.ready.le: lensing_free(&self.le)
         if self.ready.sp: harmonic_free(&self.sp)
         if self.ready.tr: transfer_free(&self.tr)
-        if self.ready.nl: fourier_free(&self.nl)
+        if self.ready.fo: fourier_free(&self.fo)
         if self.ready.pm: primordial_free(&self.pm)
         if self.ready.pt: perturbations_free(&self.pt)
         if self.ready.th: thermodynamics_free(&self.th)
@@ -257,7 +257,7 @@ cdef class ClassEngine:
         if "input" in tasks and not self.ready.input:
             if input_read_from_file(fc, &self.pr, &self.ba, &self.th,
                           &self.pt, &self.tr, &self.pm, &self.sp,
-                          &self.nl, &self.le, &self.sd, &self.op, errmsg) == _FAILURE_:
+                          &self.fo, &self.le, &self.sd, &self.op, errmsg) == _FAILURE_:
                 raise ClassParserError(errmsg, self.parameter_file)
 
             # This part is done to list all the unread parameters, for debugging
@@ -300,28 +300,28 @@ cdef class ClassEngine:
                 raise ClassBadValueError(self.pm.error_message)
             self.ready.pm = True
 
-        if "fourier" in tasks and not self.ready.nl:
+        if "fourier" in tasks and not self.ready.fo:
             if fourier_init(&self.pr, &self.ba, &self.th,
-                              &self.pt, &self.pm, &self.nl) == _FAILURE_:
-                raise ClassBadValueError(self.nl.error_message)
-            self.ready.nl = True
+                              &self.pt, &self.pm, &self.fo) == _FAILURE_:
+                raise ClassBadValueError(self.fo.error_message)
+            self.ready.fo = True
 
         if "transfer" in tasks and not self.ready.tr:
             if transfer_init(&(self.pr), &(self.ba), &(self.th),
-                             &(self.pt), &(self.nl), &(self.tr)) == _FAILURE_:
+                             &(self.pt), &(self.fo), &(self.tr)) == _FAILURE_:
                 raise ClassBadValueError(self.tr.error_message)
             self.ready.tr = True
 
         if "harmonic" in tasks and not self.ready.sp:
             if harmonic_init(&(self.pr), &(self.ba), &(self.pt),
-                            &(self.pm), &(self.nl), &(self.tr),
+                            &(self.pm), &(self.fo), &(self.tr),
                             &(self.sp)) == _FAILURE_:
                 raise ClassBadValueError(self.sp.error_message)
             self.ready.sp = True
 
         if "lensing" in tasks and not self.ready.le:
             if lensing_init(&(self.pr), &(self.pt), &(self.sp),
-                            &(self.nl), &(self.le)) == _FAILURE_:
+                            &(self.fo), &(self.le)) == _FAILURE_:
                 raise ClassBadValueError(self.le.error_message)
             self.ready.le = True
 
@@ -1174,7 +1174,7 @@ cdef class Spectra:
     cdef background * ba
     cdef perturbations * pt
     cdef primordial * pm
-    cdef fourier * nl
+    cdef fourier * fo
     cdef readonly dict data
 
     def __init__(self, ClassEngine engine):
@@ -1182,8 +1182,7 @@ cdef class Spectra:
         self.engine.compute("harmonic")
 
         self.ba = &self.engine.ba
-        self.nl = &self.engine.nl
-        self.sp = &self.engine.sp
+        self.fo = &self.engine.fo
         self.pt = &self.engine.pt
         self.pm = &self.engine.pm
 
@@ -1192,7 +1191,7 @@ cdef class Spectra:
         Boolean flag specifying whether the power spectrum is nonlinear.
         """
         def __get__(self):
-          return self.nl.method > 0
+          return self.fo.method != nl_none
 
     property has_pk_matter:
         r"""
@@ -1211,7 +1210,7 @@ cdef class Spectra:
         """
         def __get__(self):
             # factor of 1.001 to avoid bounds errors due to rounding errors
-            return 1.001*np.exp(self.nl.ln_k[0])/self.ba.h;
+            return 1.001*np.exp(self.fo.ln_k[0])/self.ba.h;
 
     property P_k_max:
         r"""
@@ -1220,14 +1219,14 @@ cdef class Spectra:
         """
         def __get__(self):
             # factor of 0.999 to avoid bounds errors due to rounding errors
-            return 0.999*np.exp(self.nl.ln_k[self.nl.k_size-1])/self.ba.h;
+            return 0.999*np.exp(self.fo.ln_k[self.fo.k_size-1])/self.ba.h;
 
     property sigma8:
         r"""
         The amplitude of matter fluctuations at :math:`z=0`.
         """
         def __get__(self):
-            return self.nl.sigma8[0]
+            return self.fo.sigma8[0]
 
     property A_s:
         r"""
@@ -1334,7 +1333,7 @@ cdef class Spectra:
         index_md = 0
         ic_num = self.sp.ic_size[index_md]
 
-        cdef np.ndarray data = np.zeros((ic_num, self.nl.k_size), dtype=dtype)
+        cdef np.ndarray data = np.zeros((ic_num, self.fo.k_size), dtype=dtype)
 
         if perturbations_output_data_at_z(self.ba, self.pt, outf, <double> z, len(dtype.fields), <double*> data.data)==_FAILURE_:
             raise ClassRuntimeError(self.pt.error_message)
@@ -1419,7 +1418,7 @@ cdef class Spectra:
 
     def _get_pk(self, k, z, int linear):
 
-        if (self.pt.has_pk_matter == _FALSE_):
+        if (self.fo.has_pk_matter == _FALSE_):
             raise ClassRuntimeError(
                 "No power spectrum computed. You must add mPk to the list of outputs."
                 )
