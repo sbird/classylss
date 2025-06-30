@@ -64,11 +64,6 @@ cdef extern from "class.h":
     cdef struct precision:
         double nonlinear_min_k_max
         ErrorMsg error_message
-        #Added by classylss
-        FileName hyrec_Alpha_inf_file;
-        FileName hyrec_R_inf_file;
-        FileName hyrec_two_photon_tables_file;
-        FileName sBBN_file;
 
     cdef struct background:
         short is_allocated
@@ -103,7 +98,6 @@ cdef extern from "class.h":
         double h
         double H0
         double age
-        double a_max   #Added by classylss
         double conformal_age
         double K
         double * m_ncdm_in_eV
@@ -177,7 +171,6 @@ cdef extern from "class.h":
         double cross_idm_b
         double n_index_idm_b
         int tt_size
-        short inter_normal #Added by classylss
 
     cdef struct perturbations:
         short is_allocated
@@ -392,22 +385,6 @@ cdef extern from "class.h":
         int index_ct_tl
         int * l_size
         int index_md_scalars
-        #Added by classylss
-        double alpha_II_2_20
-        double alpha_RI_2_20
-        double alpha_RR_2_20
-        double alpha_II_21_200
-        double alpha_RI_21_200
-        double alpha_RR_21_200
-        double alpha_II_201_2500
-        double alpha_RI_201_2500
-        double alpha_RR_201_2500
-        double alpha_II_2_2500
-        double alpha_RI_2_2500
-        double alpha_RR_2_2500
-        double alpha_kp
-        double alpha_k1
-        double alpha_k2
 
     cdef struct output:
         ErrorMsg error_message
@@ -534,7 +511,7 @@ cdef extern from "class.h":
     int background_output_titles(void * pba, char titles[_MAXTITLESTRINGLENGTH_]) nogil
     int background_output_data(void *pba, int number_of_titles, double *data) nogil
 
-    int thermodynamics_at_z(void * pba, void * pth, double z, short inter_mode, int * last_index, double *pvecback, double *pvecthermo) nogil
+    int thermodynamics_at_z(void * pba, void * pth, double z, int inter_mode, int * last_index, double *pvecback, double *pvecthermo) nogil
     int thermodynamics_output_titles(void * pba, void *pth, char titles[_MAXTITLESTRINGLENGTH_]) nogil
     int thermodynamics_output_data(void *pba, void *pth, int number_of_titles, double *data) nogil
 
@@ -654,12 +631,3 @@ cdef extern from "class.h":
                   double * pk_tot_out,
                   double * pk_cb_tot_out,
                   int nonlinear) nogil
-
-    int harmonic_sigma(
-                     void * pba,
-                     void * ppm,
-                     void * phr,
-                     double R,
-                     double z,
-                     double *sigma
-                     ) nogil
