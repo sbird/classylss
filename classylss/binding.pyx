@@ -1170,7 +1170,6 @@ cdef class Spectra:
       the CLASS engine object
     """
     cdef ClassEngine engine
-    cdef harmonic * sp
     cdef background * ba
     cdef perturbations * pt
     cdef primordial * pm
@@ -1179,7 +1178,7 @@ cdef class Spectra:
 
     def __init__(self, ClassEngine engine):
         self.engine = engine
-        self.engine.compute("harmonic")
+        self.engine.compute("fourier")
 
         self.ba = &self.engine.ba
         self.fo = &self.engine.fo
@@ -1355,28 +1354,30 @@ cdef class Spectra:
 
         return spectra
 
-
-    # Gives the pk for a given (k,z)
-    cdef int pk(self, double k, double z, double * pk_ic, int lin, double * pk_ ) nogil:
-        r"""
-        Gives the pk for a given ``k`` and ``z`` (will be nonlinear if requested
-        by the user, linear otherwise).
+    # Gives the total matter pk for a given (k,z)
+    cdef double pk(self,double k, double z, int lin) nogil:
+        """
+        Gives the total matter pk (in Mpc**3) for a given k (in 1/Mpc) and z (will be non linear if requested to Class, linear otherwise)
 
         .. note::
 
-            There is an additional check to verify if output contains `mPk`,
+            there is an additional check that output contains `mPk`,
             because otherwise a segfault will occur
 
         """
-        cdef double pk_cb_ic[1]
-        cdef double pk_cb[1]
-        if lin or self.nl.method == 0:
-            if harmonic_pk_at_k_and_z(self.ba, self.pm, self.sp, k, z, pk_, pk_ic, pk_cb, pk_cb_ic) == _FAILURE_:
-                return -1
+        cdef double pk
+
+        if (self.pt.has_pk_matter == _FALSE_):
+            raise ClassRuntimeError("No power spectrum computed. You must add mPk to the list of outputs.")
+
+        if lin or self.fo.method == nl_none:
+            if fourier_pk_at_k_and_z(&self.ba,&self.pm,&self.fo,pk_linear,k,z,self.fo.index_pk_m,&pk,NULL)==_FAILURE_:
+                raise ClassRuntimeError(self.fo.error_message)
         else:
-            if harmonic_pk_nl_at_k_and_z(self.ba, self.pm, self.sp, k, z, pk_, pk_cb) ==_FAILURE_:
-                return -1
-        return 0
+            if fourier_pk_at_k_and_z(&self.ba,&self.pm,&self.fo,pk_nonlinear,k,z,self.fo.index_pk_m,&pk,NULL)==_FAILURE_:
+                raise ClassRuntimeError(self.fo.error_message)
+
+        return pk
 
     def get_pk(self, k, z):
         r"""
@@ -1427,8 +1428,7 @@ cdef class Spectra:
         k = np.float64(k) * self.ba.h
         z = np.float64(z)
 
-        # Quantities for the isocurvature modes
-        cdef np.ndarray pk_ic = np.zeros(self.sp.ic_ic_size[self.sp.index_md_scalars], dtype='f8')
+        cdef np.ndarray pk_ic = np.zeros(self.fo.k_size_pk, dtype='f8')
 
         #generate a new output array of the correct shape by broadcasting input arrays together
         out = np.empty(np.broadcast(k, z).shape, np.float64)
@@ -1444,9 +1444,7 @@ cdef class Spectra:
                 aval = (<double*>np.PyArray_MultiIter_DATA(it, 0))[0]
                 bval = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
                 cval = <double*>(np.PyArray_MultiIter_DATA(it, 2))
-                if -1 == self.pk(aval, bval, <double*> pk_ic.data, linear, cval):
-                    cval[0] = NAN
-
+                cval[0] = self.pk(aval, bval, linear)
                 #PyArray_MultiIter_NEXT is used to advance the iterator
                 np.PyArray_MultiIter_NEXT(it)
 
