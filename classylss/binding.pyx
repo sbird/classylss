@@ -222,7 +222,6 @@ cdef class ClassEngine:
         self.compute('input')
 
     def __dealloc__(self):
-        if self.ready.fc: parser_free(&self.fc)
         if self.ready.le: lensing_free(&self.le)
         if self.ready.sp: harmonic_free(&self.sp)
         if self.ready.tr: transfer_free(&self.tr)
