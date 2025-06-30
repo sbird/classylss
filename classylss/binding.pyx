@@ -1170,6 +1170,7 @@ cdef class Spectra:
       the CLASS engine object
     """
     cdef ClassEngine engine
+    cdef precision * pr
     cdef background * ba
     cdef perturbations * pt
     cdef primordial * pm
@@ -1180,6 +1181,7 @@ cdef class Spectra:
         self.engine = engine
         self.engine.compute("fourier")
 
+        self.pr = &self.engine.pr
         self.ba = &self.engine.ba
         self.fo = &self.engine.fo
         self.pt = &self.engine.pt
@@ -1257,31 +1259,50 @@ cdef class Spectra:
         def __get__(self):
             return self.pm.k_pivot / self.ba.h
 
+    #################################
+    # Gives sigma(R,z) for a given (R,z)
+    cdef sigma(self,R,z, h_units = False):
+        """
+        Gives sigma (total matter) for a given R and z
+        (R is the radius in units of Mpc, so if R=8/h this will be the usual sigma8(z).
+         This is unless h_units is set to true, in which case R is the radius in units of Mpc/h,
+         and R=8 corresponds to sigma8(z))
+
+        .. note::
+
+            there is an additional check to verify whether output contains `mPk`,
+            and whether k_max > ...
+            because otherwise a segfault will occur
+
+        """
+        cdef double sigma
+
+        zarr = np.atleast_1d(z).astype(np.float64)
+        Rarr = np.atleast_1d(R).astype(np.float64)
+
+        if (self.pt.has_pk_matter == _FALSE_):
+            raise ClassRuntimeError("No power spectrum computed. In order to get sigma(R,z) you must add mPk to the list of outputs.")
+
+        if (self.pt.k_max_for_pk < self.ba.h):
+            raise ClassRuntimeError("In order to get sigma(R,z) you must set 'P_k_max_h/Mpc' to 1 or bigger, in order to have k_max > 1 h/Mpc.")
+
+        R_in_Mpc = (Rarr if not h_units else Rarr/self.ba.h)
+
+        pairs = np.array(np.meshgrid(zarr,R_in_Mpc)).T.reshape(-1,2)
+
+        sigmas = np.empty(pairs.shape[0])
+        for ip, pair in enumerate(pairs):
+          if fourier_sigmas_at_z(self.pr,self.ba,self.fo,pair[1],pair[0],self.fo.index_pk_m,out_sigma,&sigma)==_FAILURE_:
+              raise ClassRuntimeError(self.fo.error_message)
+          sigmas[ip] = sigma
+
+        return (sigmas[0] if (np.isscalar(z) and np.isscalar(R)) else np.squeeze(sigmas.reshape(len(zarr),len(Rarr))))
+
     def sigma8_z(self, z):
         r"""
         Return :math:`\sigma_8(z)`.
         """
-        #generate a new output array of the correct shape by broadcasting input arrays together
-        z = np.float64(z)
-        out = np.empty(np.broadcast(z).shape, np.float64)
-
-        #generate the iterator over the input and output arrays, does the same thing as
-        cdef np.broadcast it = np.broadcast(z,  out)
-
-        with nogil:
-            while np.PyArray_MultiIter_NOTDONE(it):
-
-                #PyArray_MultiIter_DATA is used to access the pointers the iterator points to
-                aval = (<double*>np.PyArray_MultiIter_DATA(it, 0))[0]
-                bval = (<double*>np.PyArray_MultiIter_DATA(it, 1))
-
-                if _FAILURE_ == harmonic_sigma(self.ba, self.pm, self.sp, 8./self.ba.h, aval, bval):
-                    bval[0] = NAN
-
-                #PyArray_MultiIter_NEXT is used to advance the iterator
-                np.PyArray_MultiIter_NEXT(it)
-
-        return out
+        return self.sigma(8, z)
 
     def get_transfer(self, z=0, output_format='class'):
         r"""
